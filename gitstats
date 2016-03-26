@@ -13,6 +13,12 @@ License:  GPLv2 / GPLv3
 
 --------
 """
+# ----------------------------------------------------------------------------
+# Imports
+# ----------------------------------------------------------------------------
+
+
+# ---- Standard Libraries
 import datetime
 import getopt
 import glob
@@ -31,6 +37,11 @@ if sys.version_info < (2, 6):
 	sys.exit(1)
 
 from multiprocessing import Pool
+
+# ----------------------------------------------------------------------------
+# Global Variables
+# ----------------------------------------------------------------------------
+
 
 os.environ['LC_ALL'] = 'C'
 
@@ -62,6 +73,11 @@ conf = {
 	'start_date': ''
 }
 
+# ----------------------------------------------------------------------------
+# Functions
+# ----------------------------------------------------------------------------
+
+
 def getpipeoutput(cmds, quiet = False):
 	global exectime_external
 	start = time.time()
@@ -71,7 +87,10 @@ def getpipeoutput(cmds, quiet = False):
 	p = subprocess.Popen(cmds[0], stdout = subprocess.PIPE, shell = True)
 	processes=[p]
 	for x in cmds[1:]:
-		p = subprocess.Popen(x, stdin = p.stdout, stdout = subprocess.PIPE, shell = True)
+		p = subprocess.Popen(x,
+                             stdin = p.stdout,
+                             stdout = subprocess.PIPE,
+                             shell = True)
 		processes.append(p)
 	output = p.communicate()[0]
 	for p in processes:
@@ -84,11 +103,13 @@ def getpipeoutput(cmds, quiet = False):
 	exectime_external += (end - start)
 	return output.rstrip('\n')
 
+
 def getlogrange(defaultrange = 'HEAD', end_only = True):
 	commit_range = getcommitrange(defaultrange, end_only)
 	if len(conf['start_date']) > 0:
 		return '--since="%s" "%s"' % (conf['start_date'], commit_range)
 	return commit_range
+
 
 def getcommitrange(defaultrange = 'HEAD', end_only = False):
 	if len(conf['commit_end']) > 0:
@@ -97,12 +118,15 @@ def getcommitrange(defaultrange = 'HEAD', end_only = False):
 		return '%s..%s' % (conf['commit_begin'], conf['commit_end'])
 	return defaultrange
 
+
 def getkeyssortedbyvalues(dict):
 	return map(lambda el : el[1], sorted(map(lambda el : (el[1], el[0]), dict.items())))
+
 
 # dict['author'] = { 'commits': 512 } - ...key(dict, 'commits')
 def getkeyssortedbyvaluekey(d, key):
 	return map(lambda el : el[1], sorted(map(lambda el : (d[el][key], el), d.keys())))
+
 
 def getstatsummarycounts(line):
 	numbers = re.findall('\d+', line)
@@ -116,6 +140,7 @@ def getstatsummarycounts(line):
 		numbers.insert(1, 0); # only deletions were printed on line
 	return numbers
 
+
 VERSION = 0
 def getversion():
 	global VERSION
@@ -125,18 +150,24 @@ def getversion():
 			(gitstats_repo, gitstats_repo, getcommitrange('HEAD').split('\n')[0])])
 	return VERSION
 
+
 def getgitversion():
 	return getpipeoutput(['git --version']).split('\n')[0]
 
+
 def getgnuplotversion():
 	return getpipeoutput(['%s --version' % gnuplot_cmd]).split('\n')[0]
+
 
 def getnumoffilesfromrev(time_rev):
 	"""
 	Get number of files changed in commit
 	"""
 	time, rev = time_rev
-	return (int(time), rev, int(getpipeoutput(['git ls-tree -r --name-only "%s"' % rev, 'wc -l']).split('\n')[0]))
+	return (int(time),
+            rev,
+            int(getpipeoutput(['git ls-tree -r --name-only "%s"' % rev, 'wc -l']).split('\n')[0]))
+
 
 def getnumoflinesinblob(ext_blob):
 	"""
@@ -144,6 +175,11 @@ def getnumoflinesinblob(ext_blob):
 	"""
 	ext, blob_id = ext_blob
 	return (ext, blob_id, int(getpipeoutput(['git cat-file blob %s' % blob_id, 'wc -l']).split()[0]))
+
+# ----------------------------------------------------------------------------
+# Class: DataCollector
+# ----------------------------------------------------------------------------
+
 
 class DataCollector:
 	"""Manages data collection from a revision control repository."""
@@ -160,7 +196,13 @@ class DataCollector:
 		self.activity_by_year_week = {} # yy_wNN -> commits
 		self.activity_by_year_week_peak = 0
 
-		self.authors = {} # name -> {commits, first_commit_stamp, last_commit_stamp, last_active_day, active_days, lines_added, lines_removed}
+		self.authors = {} # name -> {commits,
+                          #          first_commit_stamp,
+                          #          last_commit_stamp,
+                          #          last_active_day,
+                          #          active_days,
+                          #          lines_added,
+                          #          lines_removed}
 
 		self.total_commits = 0
 		self.total_files = 0
@@ -294,6 +336,11 @@ class DataCollector:
 			pass
 		os.rename(tempfile, cachefile)
 
+# ----------------------------------------------------------------------------
+# Class: GitDataCollector
+# ----------------------------------------------------------------------------
+
+
 class GitDataCollector(DataCollector):
 	def collect(self, dir):
 		DataCollector.collect(self, dir)
@@ -317,7 +364,13 @@ class GitDataCollector(DataCollector):
 					stamp = int(parts[0])
 				except ValueError:
 					stamp = 0
-				self.tags[tag] = { 'stamp': stamp, 'hash' : hash, 'date' : datetime.datetime.fromtimestamp(stamp).strftime('%Y-%m-%d'), 'commits': 0, 'authors': {} }
+				self.tags[tag] = {
+                    'stamp': stamp,
+                    'hash' : hash,
+                    'date' : datetime.datetime.fromtimestamp(stamp).strftime('%Y-%m-%d'),
+                    'commits': 0,
+                    'authors': {}
+                }
 
 		# collect info on tags, starting from latest
 		tags_sorted_by_date_desc = map(lambda el : el[1], reversed(sorted(map(lambda el : (el[1]['date'], el[0]), self.tags.items()))))
@@ -1497,7 +1550,20 @@ class GitStats:
 			print '   sensible-browser \'%s\'' % os.path.join(outputpath, 'index.html').replace("'", "'\\''")
 			print
 
-if __name__=='__main__':
-	g = GitStats()
-	g.run(sys.argv[1:])
+# ----------------------------------------------------------------------------
+# Main
+# ----------------------------------------------------------------------------
 
+
+def main():
+    """ Runs the script as a stand alone app """
+    g = GitStats()
+    g.run(sys.argv[1:])
+
+# ----------------------------------------------------------------------------
+# Name
+# ----------------------------------------------------------------------------
+
+
+if __name__=='__main__':
+    main()
