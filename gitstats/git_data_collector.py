@@ -18,10 +18,8 @@ from __future__ import print_function
 # ---- Standard Libraries
 import datetime
 from multiprocessing import Pool
-import re
 
 # ---- Custom Libraries
-from gitstats import conf
 from gitstats.data_collector import DataCollector
 from gitstats.get_functions import *
 
