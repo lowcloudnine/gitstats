@@ -12,3 +12,4 @@ from . import conf
 from . import data_collector
 from . import get_functions
 from . import git_data_collector
+from . import report_creators
