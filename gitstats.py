@@ -22,16 +22,17 @@ from __future__ import print_function
 
 # ---- Standard Libraries
 import getopt
-import sys
-
-if sys.version_info < (2, 6):
-    print("Python 2.6 or higher is required for gitstats.py", file=sys.stderr)
-    sys.exit(1)
 
 # ---- Custom Libraries
 from gitstats.git_data_collector import GitDataCollector
 from gitstats.get_functions import *
 from gitstats.report_creators import HTMLReportCreator
+
+# ---- Python version check
+if sys.version_info < (2, 6):
+    print("Python 2.6 or higher is required for gitstats.py", file=sys.stderr)
+    sys.exit(1)
+
 
 def usage():
     print("""
@@ -109,9 +110,10 @@ class GitStats:
         report = HTMLReportCreator()
         report.create(data, outputpath)
 
-        time_end = time.time()
-        exectime_internal = time_end - conf.time_start
-        # print 'Execution time %.5f secs, %.5f secs (%.2f %%) in external commands)' % (conf.exectime_internal, conf.exectime_external, (100.0 * conf.exectime_external) / conf.exectime_internal)
+        conf.exectime_internal = time.time() - conf.time_start
+        print('Execution time %.5f secs, %.5f secs (%.2f %%) in external commands)'
+              % (conf.exectime_internal, conf.exectime_external,
+                 (100.0 * conf.exectime_external) / conf.exectime_internal))
         if sys.stdin.isatty():
             print('You may now run:')
             print()
@@ -126,13 +128,12 @@ class GitStats:
 
 def main():
     """ Runs the script as a stand alone app """
-    g = GitStats()
-    g.run(sys.argv[1:])
+    GitStats().run(sys.argv[1:])
 
 # ----------------------------------------------------------------------------
 # Name
 # ----------------------------------------------------------------------------
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
